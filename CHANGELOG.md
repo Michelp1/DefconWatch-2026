@@ -1,10 +1,17 @@
 # Changelog
 
+## v2.3
+
+- ISS live positie toegevoegd
+- SPACE-filter toegevoegd
+- Paarse ruimtemarker toegevoegd
+- Vernieuwingsinterval verlaagd naar 10 minuten
+- Cacheversie verhoogd naar v2.3
+- `LIVE_FEED_FORMAT.json` uitgebreid met feedregister, schema en voorbeeldincident
+- User-agent en Android-versie verhoogd naar 2.3
+
 ## v2.2
 
-- Kaartmarkers zijn nu aanklikbaar en tonen incidentdetails.
-- GDACS-meldingen worden automatisch ingedeeld als storm, vulkaan, overstroming, bosbrand, tsunami of algemene ramp.
-- Nieuwe filters voor stormen, vulkanen, overstromingen en bosbranden.
-- Vernieuwde offline cache voor v2.2.
-- Android-versie verhoogd naar 2.2.0 (versionCode 22).
-- GitHub Actions-artifact heet `DefconWatch-v2.2-debug-apk`.
+- Aanklikbare kaartmarkers
+- Uitgebreide incidentfilters
+- GDACS-classificatie per ramptype

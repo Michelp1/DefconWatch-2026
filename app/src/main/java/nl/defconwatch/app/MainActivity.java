@@ -60,10 +60,11 @@ import java.util.concurrent.Executors;
 public class MainActivity extends Activity {
     private static final String USGS_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson";
     private static final String GDACS_URL = "https://www.gdacs.org/xml/rss.xml";
-    private static final long REFRESH_MS = 15L * 60L * 1000L;
+    private static final String ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
+    private static final long REFRESH_MS = 10L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v22";
-    private static final String CACHE_TIME = "incident_cache_time_v22";
+    private static final String CACHE_KEY = "incident_cache_v23";
+    private static final String CACHE_TIME = "incident_cache_time_v23";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -116,7 +117,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.2", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.3", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -148,7 +149,7 @@ public class MainActivity extends Activity {
         HorizontalScrollView filters = new HorizontalScrollView(this);
         filters.setHorizontalScrollBarEnabled(false);
         LinearLayout filterRow = new LinearLayout(this);
-        String[] filterNames = {"ALLES", "KRITIEK", "AARDBEVING", "STORM", "VULKAAN", "OVERSTROMING", "BOSBRAND", "RAMP"};
+        String[] filterNames = {"ALLES", "KRITIEK", "AARDBEVING", "STORM", "VULKAAN", "OVERSTROMING", "BOSBRAND", "SPACE", "RAMP"};
         for (String filter : filterNames) {
             Button button = new Button(this);
             button.setText(filter);
@@ -205,7 +206,7 @@ public class MainActivity extends Activity {
         incidentContainer.setOrientation(LinearLayout.VERTICAL);
         content.addView(incidentContainer);
 
-        TextView sources = text("LIVE BRONNEN: USGS • GDACS\nTik op een kaartmarker voor details of op een incident om de originele bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
+        TextView sources = text("LIVE BRONNEN: USGS • GDACS • ISS\nTik op een kaartmarker voor details of op een incident om de originele bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
         sources.setPadding(0, dp(18), 0, 0);
         content.addView(sources);
         return root;
@@ -241,6 +242,7 @@ public class MainActivity extends Activity {
             StringBuilder errors = new StringBuilder();
             try { fetched.addAll(fetchUsgs()); } catch (Exception e) { errors.append("USGS niet bereikbaar. "); }
             try { fetched.addAll(fetchGdacs()); } catch (Exception e) { errors.append("GDACS niet bereikbaar. "); }
+            try { fetched.add(fetchIss()); } catch (Exception e) { errors.append("ISS-feed niet bereikbaar. "); }
             Collections.sort(fetched, Comparator.comparingInt((Incident i) -> i.severity).reversed());
             String errorText = errors.toString();
             handler.post(() -> applyData(fetched, errorText));
@@ -310,6 +312,23 @@ public class MainActivity extends Activity {
     }
 
 
+    private Incident fetchIss() throws Exception {
+        HttpURLConnection connection = open(ISS_URL);
+        String json;
+        try (InputStream in = new BufferedInputStream(connection.getInputStream())) { json = readAll(in); }
+        finally { connection.disconnect(); }
+        JSONObject root = new JSONObject(json);
+        Incident x = new Incident();
+        x.type = "SPACE";
+        x.title = "ISS live positie • " + String.format(Locale.US, "%.2f, %.2f", root.optDouble("latitude", 0), root.optDouble("longitude", 0));
+        x.lat = root.optDouble("latitude", 0);
+        x.lon = root.optDouble("longitude", 0);
+        x.severity = 1;
+        x.source = "Where The ISS At";
+        x.url = "https://wheretheiss.at/";
+        return x;
+    }
+
     private String classifyGdacsType(String probe) {
         if (probe.contains("cyclone") || probe.contains("hurricane") || probe.contains("typhoon") || probe.contains("storm")) return "STORM";
         if (probe.contains("volcano") || probe.contains("eruption")) return "VULKAAN";
@@ -323,7 +342,7 @@ public class MainActivity extends Activity {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(12000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.2");
+        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.3");
         c.setRequestProperty("Accept", "application/json, application/xml, text/xml, */*");
         if (c.getResponseCode() >= 400) throw new IllegalStateException("HTTP " + c.getResponseCode());
         return c;
@@ -556,9 +575,10 @@ public class MainActivity extends Activity {
             p.reset(); p.moveTo(w*.80f,h*.73f); p.lineTo(w*.92f,h*.70f); p.lineTo(w*.96f,h*.85f); p.lineTo(w*.85f,h*.92f); p.close(); c.drawPath(p,paint);
             for(Incident i: points) {
                 float x=(float)((i.lon+180d)/360d*w); float y=(float)((90d-i.lat)/180d*h);
-                paint.setColor(i.severity>=5?Color.rgb(255,78,85):i.severity==4?Color.rgb(255,152,56):i.severity==3?Color.rgb(255,213,74):Color.rgb(66,211,255));
-                paint.setStyle(Paint.Style.FILL); c.drawCircle(x,y,i.severity>=4?8f:5f,paint);
-                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2f); c.drawCircle(x,y,i.severity>=4?14f:9f,paint);
+                paint.setColor("SPACE".equals(i.type)?Color.rgb(167,139,250):i.severity>=5?Color.rgb(255,78,85):i.severity==4?Color.rgb(255,152,56):i.severity==3?Color.rgb(255,213,74):Color.rgb(66,211,255));
+                paint.setStyle(Paint.Style.FILL);
+                if ("SPACE".equals(i.type)) c.drawRect(x-6f,y-6f,x+6f,y+6f,paint); else c.drawCircle(x,y,i.severity>=4?8f:5f,paint);
+                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2f); c.drawCircle(x,y,"SPACE".equals(i.type)?12f:(i.severity>=4?14f:9f),paint);
             }
         }
     }
