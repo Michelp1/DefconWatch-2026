@@ -1,17 +1,16 @@
 # Changelog
 
-## v2.3
+## v2.4
 
-- ISS live positie toegevoegd
-- SPACE-filter toegevoegd
-- Paarse ruimtemarker toegevoegd
-- Vernieuwingsinterval verlaagd naar 10 minuten
-- Cacheversie verhoogd naar v2.3
-- `LIVE_FEED_FORMAT.json` uitgebreid met feedregister, schema en voorbeeldincident
-- User-agent en Android-versie verhoogd naar 2.3
+### Nieuw
+- Kaart kan worden versleept
+- Pinch-to-zoom en zoomknoppen
+- Kaartresetknop
+- Vier live dashboardstatistieken
+- Verbeterde hit-detectie van markers tijdens zoom
 
-## v2.2
-
-- Aanklikbare kaartmarkers
-- Uitgebreide incidentfilters
-- GDACS-classificatie per ramptype
+### Verbeterd
+- Versienummer gecorrigeerd naar 2.4.0
+- Cache gescheiden van oudere releases
+- User-Agent bijgewerkt naar v2.4
+- GitHub Actions artifact bijgewerkt

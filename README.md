@@ -1,28 +1,24 @@
-# DefconWatch Android v2.3
+# DefconWatch Android v2.4
 
 Een native Android-dashboard voor openbare wereldwijde incidentinformatie.
 
-## Nieuw in v2.3
+## Nieuw in v2.4
 
-- Live positie van het International Space Station op de wereldkaart
-- Nieuw filter **SPACE**
-- Paarse ISS-marker met directe bronlink
-- Automatische synchronisatie iedere 10 minuten
-- Vernieuwd en uitgebreid `LIVE_FEED_FORMAT.json`
-- Nieuwe offline cache voor v2.3
-- Verbeterde bronstatus voor USGS, GDACS en ISS
+- Zoom- en sleepbare wereldkaart
+- Knoppen voor inzoomen, uitzoomen en kaartreset
+- Live dashboardkaarten: totaal, hoog/kritiek, aardbevingen en rampen
+- Verbeterde markerselectie bij ingezoomde kaart
+- Markers schalen mee met het zoomniveau
+- Vernieuwde offline cache voor v2.4
+- Correct versienummer 2.4.0
+- Automatische APK-build via GitHub Actions
 
-## Bestaande functies
+## Live bronnen
 
-- Live USGS-aardbevingen
-- GDACS-rampenmeldingen
-- Aanklikbare incidentmarkers
-- Filters op type en ernst
-- Regionale tellingen
-- Offline cache
-- Kritieke Android-notificaties
-- Transparante, niet-officiële OSINT-readiness-index
+- USGS significante aardbevingen
+- GDACS wereldwijde rampmeldingen
+- Where The ISS At voor de ISS-positie
 
 ## Belangrijk
 
-DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De weergegeven readiness-index is uitsluitend een transparante OSINT-indicatie op basis van openbare incidentfeeds.
+DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.

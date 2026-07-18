@@ -63,8 +63,8 @@ public class MainActivity extends Activity {
     private static final String ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
     private static final long REFRESH_MS = 10L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v23";
-    private static final String CACHE_TIME = "incident_cache_time_v23";
+    private static final String CACHE_KEY = "incident_cache_v24";
+    private static final String CACHE_TIME = "incident_cache_time_v24";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -77,6 +77,10 @@ public class MainActivity extends Activity {
     private TextView levelLabel;
     private TextView statusText;
     private TextView lastUpdated;
+    private TextView totalStat;
+    private TextView criticalStat;
+    private TextView quakeStat;
+    private TextView disasterStat;
     private LinearLayout incidentContainer;
     private ProgressBar progress;
     private Button refreshButton;
@@ -117,7 +121,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.3", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.4", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -146,6 +150,16 @@ public class MainActivity extends Activity {
         readiness.addView(text("Geen officiële of geclassificeerde DEFCON-feed. De index wordt uitsluitend afgeleid uit openbare incidentgegevens.", 11, Color.rgb(143,166,181), false));
         content.addView(readiness);
 
+        LinearLayout statsRow = new LinearLayout(this);
+        statsRow.setOrientation(LinearLayout.HORIZONTAL);
+        totalStat = statCard(statsRow, "0", "TOTAAL");
+        criticalStat = statCard(statsRow, "0", "HOOG/KRITIEK");
+        quakeStat = statCard(statsRow, "0", "AARDBEVINGEN");
+        disasterStat = statCard(statsRow, "0", "RAMPEN");
+        LinearLayout.LayoutParams statsParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        statsParams.setMargins(0, dp(10), 0, 0);
+        content.addView(statsRow, statsParams);
+
         HorizontalScrollView filters = new HorizontalScrollView(this);
         filters.setHorizontalScrollBarEnabled(false);
         LinearLayout filterRow = new LinearLayout(this);
@@ -173,6 +187,28 @@ public class MainActivity extends Activity {
         mapView = new WorldMapView(this);
         mapView.setMarkerClickListener(this::showIncidentDialog);
         mapPanel.addView(mapView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(270)));
+        LinearLayout mapControls = new LinearLayout(this);
+        mapControls.setOrientation(LinearLayout.HORIZONTAL);
+        String[] controlLabels = {"−", "RESET", "+"};
+        for (String label : controlLabels) {
+            Button b = new Button(this);
+            b.setText(label);
+            b.setTextSize(11);
+            b.setTextColor(Color.WHITE);
+            b.setBackgroundColor(Color.rgb(23,35,46));
+            b.setOnClickListener(v -> {
+                String action = ((Button)v).getText().toString();
+                if ("+".equals(action)) mapView.zoomBy(1.35f);
+                else if ("−".equals(action)) mapView.zoomBy(0.74f);
+                else mapView.resetView();
+            });
+            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40));
+            cp.setMargins(dp(4), dp(4), 0, 0);
+            mapControls.addView(b, cp);
+        }
+        FrameLayout.LayoutParams controlsParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        controlsParams.setMargins(0, dp(4), dp(4), 0);
+        mapPanel.addView(mapControls, controlsParams);
         progress = new ProgressBar(this);
         mapPanel.addView(progress, new FrameLayout.LayoutParams(dp(42), dp(42), Gravity.CENTER));
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(282));
@@ -206,10 +242,27 @@ public class MainActivity extends Activity {
         incidentContainer.setOrientation(LinearLayout.VERTICAL);
         content.addView(incidentContainer);
 
-        TextView sources = text("LIVE BRONNEN: USGS • GDACS • ISS\nTik op een kaartmarker voor details of op een incident om de originele bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
+        TextView sources = text("LIVE BRONNEN: USGS • GDACS • ISS\nSleep en zoom op de kaart. Tik op een marker voor details of op een incident om de originele bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
         sources.setPadding(0, dp(18), 0, 0);
         content.addView(sources);
         return root;
+    }
+
+    private TextView statCard(LinearLayout parent, String value, String label) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setGravity(Gravity.CENTER);
+        card.setPadding(dp(5), dp(10), dp(5), dp(10));
+        card.setBackgroundColor(Color.rgb(16,24,32));
+        TextView number = text(value, 22, Color.rgb(66,211,255), true);
+        TextView caption = text(label, 8, Color.rgb(143,166,181), true);
+        caption.setGravity(Gravity.CENTER);
+        card.addView(number);
+        card.addView(caption);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+        lp.setMargins(0, 0, dp(5), 0);
+        parent.addView(card, lp);
+        return number;
     }
 
     private LinearLayout panel() {
@@ -342,7 +395,7 @@ public class MainActivity extends Activity {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(12000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.3");
+        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.4");
         c.setRequestProperty("Accept", "application/json, application/xml, text/xml, */*");
         if (c.getResponseCode() >= 400) throw new IllegalStateException("HTTP " + c.getResponseCode());
         return c;
@@ -364,6 +417,7 @@ public class MainActivity extends Activity {
             statusText.setText("Geen gegevens beschikbaar. Controleer de internetverbinding.");
         }
         updateReadiness();
+        updateStats();
         updateRegions();
         renderIncidents();
         mapView.setIncidents(new ArrayList<>(incidents));
@@ -378,6 +432,19 @@ public class MainActivity extends Activity {
         levelNumber.setText(String.valueOf(level));
         levelNumber.setTextColor(color);
         levelLabel.setText(level == 3 ? "HIGH PUBLIC ALERT\nUNOFFICIAL OSINT ESTIMATE" : level == 4 ? "ELEVATED AWARENESS\nUNOFFICIAL OSINT ESTIMATE" : "NORMAL AWARENESS\nUNOFFICIAL OSINT ESTIMATE");
+    }
+
+    private void updateStats() {
+        int critical = 0, quakes = 0, disasters = 0;
+        for (Incident i : incidents) {
+            if (i.severity >= 4) critical++;
+            if ("AARDBEVING".equals(i.type)) quakes++;
+            if (!"AARDBEVING".equals(i.type) && !"SPACE".equals(i.type)) disasters++;
+        }
+        totalStat.setText(String.valueOf(incidents.size()));
+        criticalStat.setText(String.valueOf(critical));
+        quakeStat.setText(String.valueOf(quakes));
+        disasterStat.setText(String.valueOf(disasters));
     }
 
     private void updateRegions() {
@@ -454,7 +521,7 @@ public class MainActivity extends Activity {
             long t = prefs.getLong(CACHE_TIME, 0);
             statusText.setText("OFFLINE CACHE • live synchronisatie volgt");
             lastUpdated.setText("Cache: " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date(t)));
-            updateReadiness(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
+            updateReadiness(); updateStats(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
         } catch (Exception ignored) { }
     }
 
@@ -543,43 +610,113 @@ public class MainActivity extends Activity {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final List<Incident> points = new ArrayList<>();
         private MarkerClickListener markerClickListener;
-        WorldMapView(Context c) { super(c); paint.setStrokeWidth(2f); setBackgroundColor(Color.rgb(8,14,20)); setClickable(true); }
+        private float scale = 1f;
+        private float offsetX = 0f;
+        private float offsetY = 0f;
+        private float lastX, lastY;
+        private float initialPinchDistance;
+        private float initialScale;
+        private boolean dragging;
+
+        WorldMapView(Context c) {
+            super(c);
+            paint.setStrokeWidth(2f);
+            setBackgroundColor(Color.rgb(8,14,20));
+            setClickable(true);
+        }
+
         void setIncidents(List<Incident> x) { points.clear(); points.addAll(x); invalidate(); }
         void setMarkerClickListener(MarkerClickListener listener) { markerClickListener = listener; }
+        void zoomBy(float factor) { scale = clamp(scale * factor, 1f, 4f); constrainOffsets(); invalidate(); }
+        void resetView() { scale = 1f; offsetX = 0f; offsetY = 0f; invalidate(); }
+
         @Override public boolean onTouchEvent(MotionEvent event) {
-            if (event.getAction() != MotionEvent.ACTION_UP) return true;
+            if (event.getPointerCount() >= 2) {
+                float dx = event.getX(0) - event.getX(1);
+                float dy = event.getY(0) - event.getY(1);
+                float distance = (float)Math.hypot(dx, dy);
+                if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
+                    initialPinchDistance = distance;
+                    initialScale = scale;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_MOVE && initialPinchDistance > 0f) {
+                    scale = clamp(initialScale * distance / initialPinchDistance, 1f, 4f);
+                    constrainOffsets();
+                    invalidate();
+                }
+                return true;
+            }
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    lastX = event.getX(); lastY = event.getY(); dragging = false; return true;
+                case MotionEvent.ACTION_MOVE:
+                    float dx = event.getX() - lastX, dy = event.getY() - lastY;
+                    if (Math.hypot(dx, dy) > 3) dragging = true;
+                    offsetX += dx; offsetY += dy;
+                    lastX = event.getX(); lastY = event.getY();
+                    constrainOffsets(); invalidate(); return true;
+                case MotionEvent.ACTION_UP:
+                    if (!dragging) handleMarkerTap(event.getX(), event.getY());
+                    return true;
+                default: return true;
+            }
+        }
+
+        private void handleMarkerTap(float tapX, float tapY) {
             Incident nearest = null;
             double best = Double.MAX_VALUE;
             for (Incident i : points) {
-                float x=(float)((i.lon+180d)/360d*getWidth());
-                float y=(float)((90d-i.lat)/180d*getHeight());
-                double d = Math.hypot(event.getX()-x, event.getY()-y);
+                float x = mapX(i.lon), y = mapY(i.lat);
+                double d = Math.hypot(tapX - x, tapY - y);
                 if (d < best) { best = d; nearest = i; }
             }
-            if (nearest != null && best <= 42d && markerClickListener != null) markerClickListener.onMarkerClick(nearest);
-            return true;
+            if (nearest != null && best <= 46d && markerClickListener != null) markerClickListener.onMarkerClick(nearest);
         }
+
+        private float mapX(double lon) { return (float)(((lon + 180d) / 360d * getWidth() - getWidth()/2f) * scale + getWidth()/2f + offsetX); }
+        private float mapY(double lat) { return (float)(((90d - lat) / 180d * getHeight() - getHeight()/2f) * scale + getHeight()/2f + offsetY); }
+        private float tx(float x) { return (x - getWidth()/2f) * scale + getWidth()/2f + offsetX; }
+        private float ty(float y) { return (y - getHeight()/2f) * scale + getHeight()/2f + offsetY; }
+        private static float clamp(float v, float min, float max) { return Math.max(min, Math.min(max, v)); }
+        private void constrainOffsets() {
+            float maxX = getWidth() * (scale - 1f) / 2f;
+            float maxY = getHeight() * (scale - 1f) / 2f;
+            offsetX = clamp(offsetX, -maxX, maxX);
+            offsetY = clamp(offsetY, -maxY, maxY);
+        }
+
         @Override protected void onDraw(Canvas c) {
             super.onDraw(c);
             float w=getWidth(), h=getHeight();
+            c.save();
+            c.clipRect(0,0,w,h);
             paint.setStyle(Paint.Style.STROKE); paint.setColor(Color.rgb(45,77,96)); paint.setStrokeWidth(1f);
-            for(int i=1;i<6;i++) c.drawLine(w*i/6f,0,w*i/6f,h,paint);
-            for(int i=1;i<4;i++) c.drawLine(0,h*i/4f,w,h*i/4f,paint);
+            for(int i=1;i<6;i++) c.drawLine(tx(w*i/6f),ty(0),tx(w*i/6f),ty(h),paint);
+            for(int i=1;i<4;i++) c.drawLine(tx(0),ty(h*i/4f),tx(w),ty(h*i/4f),paint);
             paint.setStyle(Paint.Style.FILL); paint.setColor(Color.rgb(23,50,64));
-            Path p=new Path();
-            p.moveTo(w*.07f,h*.28f); p.lineTo(w*.25f,h*.15f); p.lineTo(w*.34f,h*.32f); p.lineTo(w*.28f,h*.57f); p.lineTo(w*.17f,h*.63f); p.lineTo(w*.10f,h*.48f); p.close(); c.drawPath(p,paint);
-            p.reset(); p.moveTo(w*.25f,h*.62f); p.lineTo(w*.34f,h*.55f); p.lineTo(w*.39f,h*.76f); p.lineTo(w*.31f,h*.94f); p.lineTo(w*.24f,h*.77f); p.close(); c.drawPath(p,paint);
-            p.reset(); p.moveTo(w*.43f,h*.25f); p.lineTo(w*.58f,h*.16f); p.lineTo(w*.65f,h*.31f); p.lineTo(w*.58f,h*.43f); p.lineTo(w*.47f,h*.40f); p.close(); c.drawPath(p,paint);
-            p.reset(); p.moveTo(w*.50f,h*.43f); p.lineTo(w*.66f,h*.36f); p.lineTo(w*.72f,h*.59f); p.lineTo(w*.62f,h*.87f); p.lineTo(w*.52f,h*.69f); p.close(); c.drawPath(p,paint);
-            p.reset(); p.moveTo(w*.63f,h*.23f); p.lineTo(w*.91f,h*.20f); p.lineTo(w*.95f,h*.47f); p.lineTo(w*.77f,h*.58f); p.lineTo(w*.66f,h*.39f); p.close(); c.drawPath(p,paint);
-            p.reset(); p.moveTo(w*.80f,h*.73f); p.lineTo(w*.92f,h*.70f); p.lineTo(w*.96f,h*.85f); p.lineTo(w*.85f,h*.92f); p.close(); c.drawPath(p,paint);
+            drawLand(c, new float[]{.07f,.28f,.25f,.15f,.34f,.32f,.28f,.57f,.17f,.63f,.10f,.48f}, w,h);
+            drawLand(c, new float[]{.25f,.62f,.34f,.55f,.39f,.76f,.31f,.94f,.24f,.77f}, w,h);
+            drawLand(c, new float[]{.43f,.25f,.58f,.16f,.65f,.31f,.58f,.43f,.47f,.40f}, w,h);
+            drawLand(c, new float[]{.50f,.43f,.66f,.36f,.72f,.59f,.62f,.87f,.52f,.69f}, w,h);
+            drawLand(c, new float[]{.63f,.23f,.91f,.20f,.95f,.47f,.77f,.58f,.66f,.39f}, w,h);
+            drawLand(c, new float[]{.80f,.73f,.92f,.70f,.96f,.85f,.85f,.92f}, w,h);
             for(Incident i: points) {
-                float x=(float)((i.lon+180d)/360d*w); float y=(float)((90d-i.lat)/180d*h);
+                float x=mapX(i.lon), y=mapY(i.lat);
+                if (x < -25 || y < -25 || x > w+25 || y > h+25) continue;
                 paint.setColor("SPACE".equals(i.type)?Color.rgb(167,139,250):i.severity>=5?Color.rgb(255,78,85):i.severity==4?Color.rgb(255,152,56):i.severity==3?Color.rgb(255,213,74):Color.rgb(66,211,255));
                 paint.setStyle(Paint.Style.FILL);
-                if ("SPACE".equals(i.type)) c.drawRect(x-6f,y-6f,x+6f,y+6f,paint); else c.drawCircle(x,y,i.severity>=4?8f:5f,paint);
-                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2f); c.drawCircle(x,y,"SPACE".equals(i.type)?12f:(i.severity>=4?14f:9f),paint);
+                float marker = Math.max(5f, Math.min(10f, (i.severity>=4?8f:5f) * (0.8f + scale*0.2f)));
+                if ("SPACE".equals(i.type)) c.drawRect(x-marker,y-marker,x+marker,y+marker,paint); else c.drawCircle(x,y,marker,paint);
+                paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(2f); c.drawCircle(x,y,marker+6f,paint);
             }
+            c.restore();
+        }
+
+        private void drawLand(Canvas c, float[] coords, float w, float h) {
+            Path p = new Path();
+            p.moveTo(tx(w*coords[0]), ty(h*coords[1]));
+            for (int i=2;i<coords.length;i+=2) p.lineTo(tx(w*coords[i]), ty(h*coords[i+1]));
+            p.close(); c.drawPath(p,paint);
         }
     }
+
 }

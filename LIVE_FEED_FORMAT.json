@@ -1,69 +1,43 @@
 {
-  "schemaVersion": "2.3",
-  "generatedAt": "2026-07-18T19:56:00+02:00",
+  "schemaVersion": "2.4",
+  "appVersion": "2.4.0",
   "refreshIntervalMinutes": 10,
-  "readiness": {
-    "level": 4,
-    "label": "ELEVATED AWARENESS",
-    "official": false,
-    "method": "Transparent OSINT heuristic based on public incident feeds",
-    "disclaimer": "This is not an official or classified DEFCON level."
-  },
   "feeds": [
     {
       "id": "usgs-significant-day",
-      "category": "earthquake",
-      "name": "USGS Significant Earthquakes",
-      "format": "geojson",
-      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson",
-      "enabled": true
+      "category": "AARDBEVING",
+      "format": "GeoJSON",
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson"
     },
     {
       "id": "gdacs-rss",
-      "category": "disaster",
-      "name": "GDACS Global Disaster Alerts",
-      "format": "rss",
-      "url": "https://www.gdacs.org/xml/rss.xml",
-      "enabled": true
+      "category": "RAMP",
+      "format": "RSS/XML",
+      "url": "https://www.gdacs.org/xml/rss.xml"
     },
     {
       "id": "iss-position",
-      "category": "space",
-      "name": "ISS Live Position",
-      "format": "json",
-      "url": "https://api.wheretheiss.at/v1/satellites/25544",
-      "enabled": true
+      "category": "SPACE",
+      "format": "JSON",
+      "url": "https://api.wheretheiss.at/v1/satellites/25544"
     }
   ],
-  "incidentSchema": {
-    "required": ["id", "type", "title", "latitude", "longitude", "severity", "source", "sourceUrl", "updatedAt"],
-    "severityScale": {
-      "1": "informational",
-      "2": "low",
-      "3": "elevated",
-      "4": "high",
-      "5": "critical"
-    },
-    "supportedTypes": [
-      "earthquake",
-      "storm",
-      "volcano",
-      "flood",
-      "wildfire",
-      "tsunami",
-      "space",
-      "disaster"
-    ]
+  "supportedTypes": ["AARDBEVING", "STORM", "VULKAAN", "OVERSTROMING", "BOSBRAND", "TSUNAMI", "SPACE", "RAMP"],
+  "severityScale": {
+    "1": "informatief",
+    "2": "laag",
+    "3": "verhoogd",
+    "4": "hoog",
+    "5": "kritiek"
   },
-  "exampleIncident": {
-    "id": "iss-live",
-    "type": "space",
-    "title": "ISS live position",
-    "latitude": 0.0,
-    "longitude": 0.0,
-    "severity": 1,
-    "source": "Where The ISS At",
-    "sourceUrl": "https://wheretheiss.at/",
-    "updatedAt": "2026-07-18T19:56:00+02:00"
-  }
+  "mapCapabilities": {
+    "drag": true,
+    "pinchZoom": true,
+    "zoomButtons": true,
+    "reset": true,
+    "minZoom": 1.0,
+    "maxZoom": 4.0
+  },
+  "requiredIncidentFields": ["type", "title", "source", "url", "lat", "lon", "severity"],
+  "disclaimer": "De readiness-index is geen officieel of geclassificeerd DEFCON-niveau."
 }
