@@ -1,1 +1,61 @@
-{"version":"3.1","build":31,"release":"2026-07-18"}
+{
+  "schemaVersion": "3.0",
+  "appVersion": "3.0.0",
+  "disclaimer": "Geen officiële of geclassificeerde DEFCON-feed; uitsluitend openbare OSINT-indicatie.",
+  "refreshMinutes": 10,
+  "sources": [
+    {
+      "id": "usgs",
+      "name": "USGS Significant Earthquakes",
+      "format": "GeoJSON",
+      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson"
+    },
+    {
+      "id": "gdacs",
+      "name": "GDACS Disaster Alerts",
+      "format": "RSS/XML",
+      "url": "https://www.gdacs.org/xml/rss.xml"
+    },
+    {
+      "id": "iss",
+      "name": "Where The ISS At",
+      "format": "JSON",
+      "url": "https://api.wheretheiss.at/v1/satellites/25544"
+    }
+  ],
+  "incidentTypes": [
+    "AARDBEVING",
+    "STORM",
+    "VULKAAN",
+    "OVERSTROMING",
+    "BOSBRAND",
+    "TSUNAMI",
+    "SPACE",
+    "RAMP"
+  ],
+  "severity": {
+    "1": "informatief",
+    "2": "laag",
+    "3": "verhoogd",
+    "4": "hoog",
+    "5": "kritiek"
+  },
+  "notificationThresholds": {
+    "4": "hoog en kritiek",
+    "5": "alleen kritiek",
+    "99": "uit"
+  },
+  "requiredIncidentFields": [
+    "type",
+    "title",
+    "source",
+    "url",
+    "lat",
+    "lon",
+    "severity"
+  ],
+  "version": "3.1",
+  "build": 31,
+  "release": "2026-07-18",
+  "minimumAppVersion": "3.1"
+}

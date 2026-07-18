@@ -1,22 +1,24 @@
 # DefconWatch Android v3.1
 
-Native Android OSINT-commandocentrum voor openbare wereldwijde incidentinformatie.
+Installeerbare Android OSINT-app met openbare incidentfeeds.
 
-## Nieuw in v3.1
+## Functies
+- USGS significante aardbevingen
+- GDACS rampenmeldingen
+- Live ISS-positie
+- Interactieve wereldkaart
+- Zoek- en filterfuncties
+- Wereldrisicoscore en Mission Brief
+- Offline cache en meldingsdrempel
 
-- Dynamische **Mission Brief** met automatische samenvatting van de actuele situatie
-- Instelbare meldingsdrempel: hoog+, alleen kritiek of uit
-- Sorteerbare incidentenlijst op ernst of bron
-- Wereldrisicoscore, regionale signalen en live bronstatus
-- Zoom- en sleepbare wereldkaart met klikbare markers
-- Live USGS-aardbevingen, GDACS-rampen en ISS-positie
-- Zoekfunctie, filters, offline cache en deelbaar situatierapport
-- GitHub Actions bouwt automatisch een debug-APK
+## APK via GitHub Actions
+1. Upload de volledige inhoud van deze map naar de hoofdmap van de GitHub-repository.
+2. Open **Actions**.
+3. Kies **Build DefconWatch APK**.
+4. Kies **Run workflow**.
+5. Open de geslaagde build en download **DefconWatch-v3.1-APK** onder Artifacts.
 
-## Belangrijk
+De workflow gebruikt zelf Gradle 8.9. Daardoor zijn `gradlew` en de Gradle Wrapper niet nodig voor de GitHub-build.
 
-DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.
-
-
-## v3.1
-- Documentation updated for v3.1.
+## Android Studio
+Open deze projectmap in Android Studio en laat Gradle synchroniseren. Daarna kan via **Build > Build APK(s)** lokaal een APK worden gemaakt.

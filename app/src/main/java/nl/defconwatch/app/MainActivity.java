@@ -64,8 +64,8 @@ public class MainActivity extends Activity {
     private static final String ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
     private static final long REFRESH_MS = 10L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v30";
-    private static final String CACHE_TIME = "incident_cache_time_v30";
+    private static final String CACHE_KEY = "incident_cache_v31";
+    private static final String CACHE_TIME = "incident_cache_time_v31";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -106,7 +106,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
         requestNotificationPermission();
-        alertThreshold = getSharedPreferences(PREFS, MODE_PRIVATE).getInt("alert_threshold_v30", 5);
+        alertThreshold = getSharedPreferences(PREFS, MODE_PRIVATE).getInt("alert_threshold_v31", 5);
         setContentView(buildUi());
         loadCachedData();
         refreshData(false);
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v3.0", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v3.1", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -194,7 +194,7 @@ public class MainActivity extends Activity {
             b.setOnClickListener(v -> {
                 String value = ((Button)v).getText().toString();
                 alertThreshold = "HOOG+".equals(value) ? 4 : "KRITIEK".equals(value) ? 5 : 99;
-                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt("alert_threshold_v30", alertThreshold).apply();
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt("alert_threshold_v31", alertThreshold).apply();
                 updateAlertSetting();
             });
             LinearLayout.LayoutParams abp = new LinearLayout.LayoutParams(0, dp(40), 1);
