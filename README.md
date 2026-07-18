@@ -1,33 +1,30 @@
-# DefconWatch Android v2.0
+# DefconWatch Android v2.1
 
-Een native Android-dashboard voor publieke wereldwijde incidentinformatie.
+Een native Android-dashboard voor openbare wereldwijde incidentinformatie.
+
+## Nieuw in v2.1
+- Incidentfilters: alles, kritiek, aardbevingen en rampen
+- Incidentkaarten zijn aanklikbaar en openen de originele bron
+- Lokale offline cache van de laatst gesynchroniseerde incidenten
+- Verbeterde readiness-berekening en regionale tellingen
+- Kritieke notificatie opent direct het bronbericht
+- Vernieuwde kaartmarkeringen en statusmeldingen
+- GitHub Actions-workflow bijgewerkt voor AGP 9.2 en Gradle 9.4.1
 
 ## Belangrijk
 DefconWatch heeft **geen toegang tot officiële, geclassificeerde DEFCON-niveaus**. De getoonde readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.
 
-## Ingebouwd
-- Wereldkaart zonder externe kaart-API of sleutel
-- Live significante aardbevingen via USGS GeoJSON
-- Live rampmeldingen via GDACS RSS
-- Regionale incidenttellers
-- Automatische verversing elke 15 minuten terwijl de app geopend is
-- Handmatige vernieuwingsknop
-- Lokale waarschuwing bij incidenten met hoge ernst
-- GitHub Actions die automatisch Gradle 9.1.0 installeert en een debug-APK bouwt
-
-## Uploaden naar GitHub
-Kopieer **de inhoud van deze map** naar de lokale map van jouw repository. Commit daarna in GitHub Desktop en klik op **Push origin**.
-
-## APK downloaden
-1. Open de repository op GitHub.
-2. Open **Actions**.
-3. Open de nieuwste groene build.
-4. Download onder **Artifacts**: `DefconWatch-v2-debug-apk`.
-5. Pak het ZIP-bestand uit en installeer `app-debug.apk`.
-
-## Bronnen
+## Live bronnen
 - USGS Earthquake Hazards Program
 - GDACS (Global Disaster Alert and Coordination System)
 
+## Automatische APK-build
+Na iedere push naar `main` start GitHub Actions automatisch een debugbuild.
+
+1. Open **Actions** in de repository.
+2. Open de nieuwste groene run.
+3. Download onder **Artifacts**: `DefconWatch-v2.1-debug-apk`.
+4. Pak de artifact-ZIP uit en installeer `app-debug.apk`.
+
 ## Privacy
-De app vraagt geen locatie en verzendt geen gebruikersgegevens.
+De app vraagt geen locatie en verzendt geen gebruikersgegevens. Alleen openbare feeds worden opgehaald. De incidentcache blijft lokaal op het apparaat.
