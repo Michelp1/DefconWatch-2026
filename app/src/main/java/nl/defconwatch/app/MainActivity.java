@@ -2,6 +2,7 @@ package nl.defconwatch.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,6 +24,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -60,8 +62,8 @@ public class MainActivity extends Activity {
     private static final String GDACS_URL = "https://www.gdacs.org/xml/rss.xml";
     private static final long REFRESH_MS = 15L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v21";
-    private static final String CACHE_TIME = "incident_cache_time_v21";
+    private static final String CACHE_KEY = "incident_cache_v22";
+    private static final String CACHE_TIME = "incident_cache_time_v22";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -114,7 +116,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.1", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.2", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -146,7 +148,7 @@ public class MainActivity extends Activity {
         HorizontalScrollView filters = new HorizontalScrollView(this);
         filters.setHorizontalScrollBarEnabled(false);
         LinearLayout filterRow = new LinearLayout(this);
-        String[] filterNames = {"ALLES", "KRITIEK", "AARDBEVING", "RAMP"};
+        String[] filterNames = {"ALLES", "KRITIEK", "AARDBEVING", "STORM", "VULKAAN", "OVERSTROMING", "BOSBRAND", "RAMP"};
         for (String filter : filterNames) {
             Button button = new Button(this);
             button.setText(filter);
@@ -168,6 +170,7 @@ public class MainActivity extends Activity {
         mapPanel.setBackgroundColor(Color.rgb(16,24,32));
         mapPanel.setPadding(dp(6), dp(6), dp(6), dp(6));
         mapView = new WorldMapView(this);
+        mapView.setMarkerClickListener(this::showIncidentDialog);
         mapPanel.addView(mapView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(270)));
         progress = new ProgressBar(this);
         mapPanel.addView(progress, new FrameLayout.LayoutParams(dp(42), dp(42), Gravity.CENTER));
@@ -202,7 +205,7 @@ public class MainActivity extends Activity {
         incidentContainer.setOrientation(LinearLayout.VERTICAL);
         content.addView(incidentContainer);
 
-        TextView sources = text("LIVE BRONNEN: USGS • GDACS\nTik op een incident om de bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
+        TextView sources = text("LIVE BRONNEN: USGS • GDACS\nTik op een kaartmarker voor details of op een incident om de originele bron te openen. Cache wordt lokaal bewaard voor offline weergave.", 10, Color.rgb(143,166,181), false);
         sources.setPadding(0, dp(18), 0, 0);
         content.addView(sources);
         return root;
@@ -288,9 +291,9 @@ public class MainActivity extends Activity {
                     else if (inItem && "description".equalsIgnoreCase(tag)) description = parser.nextText();
                 } else if (event == XmlPullParser.END_TAG && "item".equalsIgnoreCase(tag)) {
                     Incident x = new Incident();
-                    x.type = "RAMP";
                     x.title = title == null ? "GDACS-melding" : title;
                     String probe = ((title == null ? "" : title) + " " + (description == null ? "" : description)).toLowerCase(Locale.ROOT);
+                    x.type = classifyGdacsType(probe);
                     x.severity = probe.contains("red") ? 5 : probe.contains("orange") ? 4 : 3;
                     x.source = "GDACS";
                     x.url = link == null ? "https://www.gdacs.org/" : link;
@@ -306,11 +309,21 @@ public class MainActivity extends Activity {
         return result;
     }
 
+
+    private String classifyGdacsType(String probe) {
+        if (probe.contains("cyclone") || probe.contains("hurricane") || probe.contains("typhoon") || probe.contains("storm")) return "STORM";
+        if (probe.contains("volcano") || probe.contains("eruption")) return "VULKAAN";
+        if (probe.contains("flood")) return "OVERSTROMING";
+        if (probe.contains("wildfire") || probe.contains("forest fire")) return "BOSBRAND";
+        if (probe.contains("tsunami")) return "TSUNAMI";
+        return "RAMP";
+    }
+
     private HttpURLConnection open(String url) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(12000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.1");
+        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.2");
         c.setRequestProperty("Accept", "application/json, application/xml, text/xml, */*");
         if (c.getResponseCode() >= 400) throw new IllegalStateException("HTTP " + c.getResponseCode());
         return c;
@@ -385,6 +398,17 @@ public class MainActivity extends Activity {
         if ("ALLES".equals(activeFilter)) return true;
         if ("KRITIEK".equals(activeFilter)) return i.severity >= 4;
         return activeFilter.equals(i.type);
+    }
+
+
+    private void showIncidentDialog(Incident incident) {
+        if (incident == null) return;
+        new AlertDialog.Builder(this)
+                .setTitle(incident.title)
+                .setMessage(severityLabel(incident.severity) + " • " + incident.type + " • " + incident.source)
+                .setNegativeButton("Sluiten", null)
+                .setPositiveButton("Open bron", (dialog, which) -> openUrl(incident.url))
+                .show();
     }
 
     private void openUrl(String url) {
@@ -496,10 +520,26 @@ public class MainActivity extends Activity {
     }
 
     static class WorldMapView extends View {
+        interface MarkerClickListener { void onMarkerClick(Incident incident); }
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final List<Incident> points = new ArrayList<>();
-        WorldMapView(Context c) { super(c); paint.setStrokeWidth(2f); setBackgroundColor(Color.rgb(8,14,20)); }
+        private MarkerClickListener markerClickListener;
+        WorldMapView(Context c) { super(c); paint.setStrokeWidth(2f); setBackgroundColor(Color.rgb(8,14,20)); setClickable(true); }
         void setIncidents(List<Incident> x) { points.clear(); points.addAll(x); invalidate(); }
+        void setMarkerClickListener(MarkerClickListener listener) { markerClickListener = listener; }
+        @Override public boolean onTouchEvent(MotionEvent event) {
+            if (event.getAction() != MotionEvent.ACTION_UP) return true;
+            Incident nearest = null;
+            double best = Double.MAX_VALUE;
+            for (Incident i : points) {
+                float x=(float)((i.lon+180d)/360d*getWidth());
+                float y=(float)((90d-i.lat)/180d*getHeight());
+                double d = Math.hypot(event.getX()-x, event.getY()-y);
+                if (d < best) { best = d; nearest = i; }
+            }
+            if (nearest != null && best <= 42d && markerClickListener != null) markerClickListener.onMarkerClick(nearest);
+            return true;
+        }
         @Override protected void onDraw(Canvas c) {
             super.onDraw(c);
             float w=getWidth(), h=getHeight();

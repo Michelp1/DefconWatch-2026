@@ -1,30 +1,25 @@
-# DefconWatch Android v2.1
+# DefconWatch Android v2.2
 
 Een native Android-dashboard voor openbare wereldwijde incidentinformatie.
 
-## Nieuw in v2.1
-- Incidentfilters: alles, kritiek, aardbevingen en rampen
-- Incidentkaarten zijn aanklikbaar en openen de originele bron
-- Lokale offline cache van de laatst gesynchroniseerde incidenten
-- Verbeterde readiness-berekening en regionale tellingen
-- Kritieke notificatie opent direct het bronbericht
-- Vernieuwde kaartmarkeringen en statusmeldingen
-- GitHub Actions-workflow bijgewerkt voor AGP 9.2 en Gradle 9.4.1
+## Nieuw in v2.2
 
-## Belangrijk
-DefconWatch heeft **geen toegang tot officiële, geclassificeerde DEFCON-niveaus**. De getoonde readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.
+- Aanklikbare incidentmarkers op de wereldkaart.
+- Incidentdetails met directe bronknop.
+- Automatische classificatie van GDACS-meldingen.
+- Filters voor kritiek, aardbevingen, stormen, vulkanen, overstromingen, bosbranden en overige rampen.
+- Offline cache en automatische synchronisatie.
+- Regionale tellingen en transparante OSINT-readiness-index.
 
 ## Live bronnen
-- USGS Earthquake Hazards Program
-- GDACS (Global Disaster Alert and Coordination System)
 
-## Automatische APK-build
-Na iedere push naar `main` start GitHub Actions automatisch een debugbuild.
+- USGS significante aardbevingen.
+- GDACS wereldwijde rampmeldingen.
 
-1. Open **Actions** in de repository.
-2. Open de nieuwste groene run.
-3. Download onder **Artifacts**: `DefconWatch-v2.1-debug-apk`.
-4. Pak de artifact-ZIP uit en installeer `app-debug.apk`.
+## Belangrijk
 
-## Privacy
-De app vraagt geen locatie en verzendt geen gebruikersgegevens. Alleen openbare feeds worden opgehaald. De incidentcache blijft lokaal op het apparaat.
+DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De getoonde readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentgegevens.
+
+## APK bouwen
+
+Na een push naar `main` start GitHub Actions automatisch een debugbuild. Open de geslaagde workflowrun en download het artifact `DefconWatch-v2.2-debug-apk`.
