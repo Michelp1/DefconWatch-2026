@@ -1,8 +1,8 @@
-# DefconWatch Android v3.0
+# DefconWatch Android v3.1
 
 Native Android OSINT-commandocentrum voor openbare wereldwijde incidentinformatie.
 
-## Nieuw in v3.0
+## Nieuw in v3.1
 
 - Dynamische **Mission Brief** met automatische samenvatting van de actuele situatie
 - Instelbare meldingsdrempel: hoog+, alleen kritiek of uit
@@ -16,3 +16,7 @@ Native Android OSINT-commandocentrum voor openbare wereldwijde incidentinformati
 ## Belangrijk
 
 DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.
+
+
+## v3.1
+- Documentation updated for v3.1.
