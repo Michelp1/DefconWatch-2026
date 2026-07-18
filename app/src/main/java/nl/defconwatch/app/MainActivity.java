@@ -33,6 +33,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -63,8 +64,8 @@ public class MainActivity extends Activity {
     private static final String ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
     private static final long REFRESH_MS = 10L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v24";
-    private static final String CACHE_TIME = "incident_cache_time_v24";
+    private static final String CACHE_KEY = "incident_cache_v25";
+    private static final String CACHE_TIME = "incident_cache_time_v25";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -81,10 +82,14 @@ public class MainActivity extends Activity {
     private TextView criticalStat;
     private TextView quakeStat;
     private TextView disasterStat;
+    private TextView riskScoreText;
+    private TextView sourceStatusText;
     private LinearLayout incidentContainer;
     private ProgressBar progress;
     private Button refreshButton;
     private String activeFilter = "ALLES";
+    private String searchQuery = "";
+    private boolean usgsOnline, gdacsOnline, issOnline;
 
     private final Runnable periodicRefresh = new Runnable() {
         @Override public void run() {
@@ -121,7 +126,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.4", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.5", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -159,6 +164,31 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams statsParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         statsParams.setMargins(0, dp(10), 0, 0);
         content.addView(statsRow, statsParams);
+
+        LinearLayout riskPanel = panel();
+        riskPanel.addView(text("WERELDRISICOSCORE", 12, Color.rgb(143,166,181), true));
+        riskScoreText = text("0 / 100 • ONBEKEND", 24, Color.rgb(66,211,255), true);
+        riskPanel.addView(riskScoreText);
+        riskPanel.addView(text("Transparante score op basis van aantal, ernst en spreiding van openbare incidentmeldingen.", 10, Color.rgb(143,166,181), false));
+        content.addView(riskPanel);
+
+        LinearLayout tools = new LinearLayout(this);
+        tools.setOrientation(LinearLayout.HORIZONTAL);
+        SearchView search = new SearchView(this);
+        search.setQueryHint("Zoek incident, type of bron");
+        search.setIconifiedByDefault(false);
+        search.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override public boolean onQueryTextSubmit(String query) { searchQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT); renderIncidents(); return true; }
+            @Override public boolean onQueryTextChange(String newText) { searchQuery = newText == null ? "" : newText.trim().toLowerCase(Locale.ROOT); renderIncidents(); return true; }
+        });
+        tools.addView(search, new LinearLayout.LayoutParams(0, dp(52), 1));
+        Button share = new Button(this);
+        share.setText("DEEL");
+        share.setTextColor(Color.WHITE);
+        share.setBackgroundColor(Color.rgb(23,35,46));
+        share.setOnClickListener(v -> shareSummary());
+        tools.addView(share, new LinearLayout.LayoutParams(dp(86), dp(52)));
+        content.addView(tools);
 
         HorizontalScrollView filters = new HorizontalScrollView(this);
         filters.setHorizontalScrollBarEnabled(false);
@@ -220,6 +250,8 @@ public class MainActivity extends Activity {
         lastUpdated = text("Nog niet gesynchroniseerd", 11, Color.rgb(143,166,181), false);
         statusPanel.addView(statusText);
         statusPanel.addView(lastUpdated);
+        sourceStatusText = text("USGS: —  •  GDACS: —  •  ISS: —", 10, Color.rgb(143,166,181), true);
+        statusPanel.addView(sourceStatusText);
         content.addView(statusPanel);
 
         TextView regionsTitle = text("REGIONALE SIGNALEN", 13, Color.rgb(66,211,255), true);
@@ -293,9 +325,10 @@ public class MainActivity extends Activity {
         executor.execute(() -> {
             List<Incident> fetched = new ArrayList<>();
             StringBuilder errors = new StringBuilder();
-            try { fetched.addAll(fetchUsgs()); } catch (Exception e) { errors.append("USGS niet bereikbaar. "); }
-            try { fetched.addAll(fetchGdacs()); } catch (Exception e) { errors.append("GDACS niet bereikbaar. "); }
-            try { fetched.add(fetchIss()); } catch (Exception e) { errors.append("ISS-feed niet bereikbaar. "); }
+            usgsOnline = gdacsOnline = issOnline = false;
+            try { fetched.addAll(fetchUsgs()); usgsOnline = true; } catch (Exception e) { errors.append("USGS niet bereikbaar. "); }
+            try { fetched.addAll(fetchGdacs()); gdacsOnline = true; } catch (Exception e) { errors.append("GDACS niet bereikbaar. "); }
+            try { fetched.add(fetchIss()); issOnline = true; } catch (Exception e) { errors.append("ISS-feed niet bereikbaar. "); }
             Collections.sort(fetched, Comparator.comparingInt((Incident i) -> i.severity).reversed());
             String errorText = errors.toString();
             handler.post(() -> applyData(fetched, errorText));
@@ -395,7 +428,7 @@ public class MainActivity extends Activity {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(12000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.4");
+        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.5");
         c.setRequestProperty("Accept", "application/json, application/xml, text/xml, */*");
         if (c.getResponseCode() >= 400) throw new IllegalStateException("HTTP " + c.getResponseCode());
         return c;
@@ -417,6 +450,8 @@ public class MainActivity extends Activity {
             statusText.setText("Geen gegevens beschikbaar. Controleer de internetverbinding.");
         }
         updateReadiness();
+        updateRiskScore();
+        updateSourceStatus();
         updateStats();
         updateRegions();
         renderIncidents();
@@ -481,11 +516,45 @@ public class MainActivity extends Activity {
     }
 
     private boolean matchesFilter(Incident i) {
-        if ("ALLES".equals(activeFilter)) return true;
-        if ("KRITIEK".equals(activeFilter)) return i.severity >= 4;
-        return activeFilter.equals(i.type);
+        boolean category = "ALLES".equals(activeFilter) || ("KRITIEK".equals(activeFilter) ? i.severity >= 4 : activeFilter.equals(i.type));
+        if (!category) return false;
+        if (searchQuery.isEmpty()) return true;
+        String haystack = (i.title + " " + i.type + " " + i.source).toLowerCase(Locale.ROOT);
+        return haystack.contains(searchQuery);
     }
 
+
+    private void updateRiskScore() {
+        int score = 0;
+        int regions = 0;
+        Map<String,Boolean> seen = new HashMap<>();
+        for (Incident i : incidents) {
+            score += i.severity >= 5 ? 12 : i.severity == 4 ? 8 : i.severity == 3 ? 4 : 1;
+            seen.put(regionFor(i.lat, i.lon), true);
+        }
+        regions = seen.size();
+        score = Math.min(100, score + Math.max(0, regions - 1) * 3);
+        String label = score >= 75 ? "KRITIEK" : score >= 50 ? "HOOG" : score >= 25 ? "VERHOOGD" : "LAAG";
+        int color = score >= 75 ? Color.rgb(255,78,85) : score >= 50 ? Color.rgb(255,152,56) : score >= 25 ? Color.rgb(255,213,74) : Color.rgb(66,226,123);
+        if (riskScoreText != null) { riskScoreText.setText(score + " / 100 • " + label); riskScoreText.setTextColor(color); }
+    }
+
+    private void updateSourceStatus() {
+        if (sourceStatusText == null) return;
+        sourceStatusText.setText("USGS: " + (usgsOnline ? "LIVE" : "OFFLINE") + "  •  GDACS: " + (gdacsOnline ? "LIVE" : "OFFLINE") + "  •  ISS: " + (issOnline ? "LIVE" : "OFFLINE"));
+        sourceStatusText.setTextColor((usgsOnline || gdacsOnline || issOnline) ? Color.rgb(66,226,123) : Color.rgb(255,78,85));
+    }
+
+    private void shareSummary() {
+        int critical = 0;
+        for (Incident i : incidents) if (i.severity >= 4) critical++;
+        String body = "DefconWatch v2.5\nActieve signalen: " + incidents.size() + "\nHoog/kritiek: " + critical + "\nStatus: " + statusText.getText() + "\n\nNiet-officiële openbare OSINT-inschatting.";
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.putExtra(Intent.EXTRA_SUBJECT, "DefconWatch situatierapport");
+        share.putExtra(Intent.EXTRA_TEXT, body);
+        startActivity(Intent.createChooser(share, "Deel situatierapport"));
+    }
 
     private void showIncidentDialog(Incident incident) {
         if (incident == null) return;
@@ -521,7 +590,7 @@ public class MainActivity extends Activity {
             long t = prefs.getLong(CACHE_TIME, 0);
             statusText.setText("OFFLINE CACHE • live synchronisatie volgt");
             lastUpdated.setText("Cache: " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date(t)));
-            updateReadiness(); updateStats(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
+            updateReadiness(); updateRiskScore(); updateSourceStatus(); updateStats(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
         } catch (Exception ignored) { }
     }
 

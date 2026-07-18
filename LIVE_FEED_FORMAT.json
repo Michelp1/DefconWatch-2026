@@ -1,43 +1,14 @@
 {
-  "schemaVersion": "2.4",
-  "appVersion": "2.4.0",
-  "refreshIntervalMinutes": 10,
-  "feeds": [
-    {
-      "id": "usgs-significant-day",
-      "category": "AARDBEVING",
-      "format": "GeoJSON",
-      "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson"
-    },
-    {
-      "id": "gdacs-rss",
-      "category": "RAMP",
-      "format": "RSS/XML",
-      "url": "https://www.gdacs.org/xml/rss.xml"
-    },
-    {
-      "id": "iss-position",
-      "category": "SPACE",
-      "format": "JSON",
-      "url": "https://api.wheretheiss.at/v1/satellites/25544"
-    }
+  "version": "2.5",
+  "refreshMinutes": 10,
+  "sources": [
+    {"id":"usgs","name":"USGS Significant Earthquakes","url":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson","format":"geojson","healthIndicator":true},
+    {"id":"gdacs","name":"GDACS Disaster Alerts","url":"https://www.gdacs.org/xml/rss.xml","format":"rss","healthIndicator":true},
+    {"id":"iss","name":"ISS Live Position","url":"https://api.wheretheiss.at/v1/satellites/25544","format":"json","healthIndicator":true}
   ],
-  "supportedTypes": ["AARDBEVING", "STORM", "VULKAAN", "OVERSTROMING", "BOSBRAND", "TSUNAMI", "SPACE", "RAMP"],
-  "severityScale": {
-    "1": "informatief",
-    "2": "laag",
-    "3": "verhoogd",
-    "4": "hoog",
-    "5": "kritiek"
-  },
-  "mapCapabilities": {
-    "drag": true,
-    "pinchZoom": true,
-    "zoomButtons": true,
-    "reset": true,
-    "minZoom": 1.0,
-    "maxZoom": 4.0
-  },
-  "requiredIncidentFields": ["type", "title", "source", "url", "lat", "lon", "severity"],
-  "disclaimer": "De readiness-index is geen officieel of geclassificeerd DEFCON-niveau."
+  "incidentTypes": ["AARDBEVING","STORM","VULKAAN","OVERSTROMING","BOSBRAND","TSUNAMI","SPACE","RAMP"],
+  "severity": {"1":"informatief","2":"laag","3":"verhoogd","4":"hoog","5":"kritiek"},
+  "features": {"search":true,"shareSummary":true,"riskScore":true,"sourceHealth":true,"offlineCache":true},
+  "schema": {"required":["type","title","source","url","lat","lon","severity"]},
+  "disclaimer": "Geen officiële of geclassificeerde DEFCON-feed. Alle niveaus en scores zijn niet-officiële OSINT-indicaties."
 }
