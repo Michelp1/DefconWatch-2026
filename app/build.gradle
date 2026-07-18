@@ -1,0 +1,23 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'nl.defconwatch.app'
+    compileSdk 37
+
+    defaultConfig {
+        applicationId 'nl.defconwatch.app'
+        minSdk 26
+        targetSdk 37
+        versionCode 20
+        versionName '2.0.0'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}

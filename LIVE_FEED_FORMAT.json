@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-07-18T18:00:00+02:00",
+  "readiness": {
+    "level": 4,
+    "label": "ELEVATED AWARENESS",
+    "official": false,
+    "method": "Transparent OSINT heuristic based on public incident feeds"
+  },
+  "incidents": [
+    {
+      "id": "example-001",
+      "type": "earthquake",
+      "title": "Example incident",
+      "latitude": 35.0,
+      "longitude": 139.0,
+      "severity": 3,
+      "source": "USGS",
+      "sourceUrl": "https://earthquake.usgs.gov/"
+    }
+  ]
+}

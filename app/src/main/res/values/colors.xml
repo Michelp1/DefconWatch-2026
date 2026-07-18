@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#05070A</color>
+    <color name="panel">#101820</color>
+    <color name="panel2">#17232E</color>
+    <color name="text">#EDF5FA</color>
+    <color name="muted">#8FA6B5</color>
+    <color name="accent">#42D3FF</color>
+    <color name="green">#42E27B</color>
+    <color name="yellow">#FFD54A</color>
+    <color name="orange">#FF9838</color>
+    <color name="red">#FF4E55</color>
+</resources>
