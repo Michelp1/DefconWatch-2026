@@ -1,17 +1,18 @@
-# DefconWatch Android v2.5
+# DefconWatch Android v3.0
 
-Native Android-dashboard voor openbare wereldwijde incidentinformatie.
+Native Android OSINT-commandocentrum voor openbare wereldwijde incidentinformatie.
 
-## Nieuw in v2.5
+## Nieuw in v3.0
 
-- Zoekfunctie voor incidenttitel, type en bron
-- Deelbaar situatierapport vanuit de app
-- Wereldrisicoscore van 0 tot 100
-- Live bronstatus voor USGS, GDACS en ISS
-- Bestaande zoom- en sleepbare wereldkaart
-- Filters, offline cache en kritieke notificaties
-- Automatische synchronisatie iedere 10 minuten
+- Dynamische **Mission Brief** met automatische samenvatting van de actuele situatie
+- Instelbare meldingsdrempel: hoog+, alleen kritiek of uit
+- Sorteerbare incidentenlijst op ernst of bron
+- Wereldrisicoscore, regionale signalen en live bronstatus
+- Zoom- en sleepbare wereldkaart met klikbare markers
+- Live USGS-aardbevingen, GDACS-rampen en ISS-positie
+- Zoekfunctie, filters, offline cache en deelbaar situatierapport
+- GitHub Actions bouwt automatisch een debug-APK
 
-## Transparantie
+## Belangrijk
 
-DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. Alle scores zijn transparante, niet-officiële OSINT-indicaties op basis van openbare incidentfeeds.
+DefconWatch heeft geen toegang tot officiële of geclassificeerde DEFCON-niveaus. De readiness-index is een transparante, niet-officiële OSINT-indicatie op basis van openbare incidentfeeds.

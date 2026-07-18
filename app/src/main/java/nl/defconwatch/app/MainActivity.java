@@ -64,8 +64,8 @@ public class MainActivity extends Activity {
     private static final String ISS_URL = "https://api.wheretheiss.at/v1/satellites/25544";
     private static final long REFRESH_MS = 10L * 60L * 1000L;
     private static final String PREFS = "defconwatch";
-    private static final String CACHE_KEY = "incident_cache_v25";
-    private static final String CACHE_TIME = "incident_cache_time_v25";
+    private static final String CACHE_KEY = "incident_cache_v30";
+    private static final String CACHE_TIME = "incident_cache_time_v30";
     private static final String CHANNEL_ID = "critical_incidents";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -84,12 +84,16 @@ public class MainActivity extends Activity {
     private TextView disasterStat;
     private TextView riskScoreText;
     private TextView sourceStatusText;
+    private TextView missionBriefText;
+    private TextView alertSettingText;
     private LinearLayout incidentContainer;
     private ProgressBar progress;
     private Button refreshButton;
     private String activeFilter = "ALLES";
     private String searchQuery = "";
     private boolean usgsOnline, gdacsOnline, issOnline;
+    private int alertThreshold = 5;
+    private boolean sortBySeverity = true;
 
     private final Runnable periodicRefresh = new Runnable() {
         @Override public void run() {
@@ -102,6 +106,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
         requestNotificationPermission();
+        alertThreshold = getSharedPreferences(PREFS, MODE_PRIVATE).getInt("alert_threshold_v30", 5);
         setContentView(buildUi());
         loadCachedData();
         refreshData(false);
@@ -126,7 +131,7 @@ public class MainActivity extends Activity {
         LinearLayout titles = new LinearLayout(this);
         titles.setOrientation(LinearLayout.VERTICAL);
         titles.addView(text("DEFCONWATCH", 24, Color.rgb(237,245,250), true));
-        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v2.5", 10, Color.rgb(66,211,255), true));
+        titles.addView(text("PUBLIC OSINT COMMAND CENTER • v3.0", 10, Color.rgb(66,211,255), true));
         header.addView(titles, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         refreshButton = new Button(this);
         refreshButton.setText("↻ LIVE");
@@ -172,6 +177,33 @@ public class MainActivity extends Activity {
         riskPanel.addView(text("Transparante score op basis van aantal, ernst en spreiding van openbare incidentmeldingen.", 10, Color.rgb(143,166,181), false));
         content.addView(riskPanel);
 
+        LinearLayout missionPanel = panel();
+        missionPanel.addView(text("MISSION BRIEF", 12, Color.rgb(143,166,181), true));
+        missionBriefText = text("Analyse wordt opgebouwd zodra live feeds beschikbaar zijn.", 13, Color.WHITE, false);
+        missionPanel.addView(missionBriefText);
+        alertSettingText = text("Meldingsdrempel: alleen kritiek", 10, Color.rgb(66,211,255), true);
+        missionPanel.addView(alertSettingText);
+        LinearLayout alertButtons = new LinearLayout(this);
+        String[] alertOptions = {"HOOG+", "KRITIEK", "UIT"};
+        for (String option : alertOptions) {
+            Button b = new Button(this);
+            b.setText(option);
+            b.setTextSize(10);
+            b.setTextColor(Color.WHITE);
+            b.setBackgroundColor(Color.rgb(23,35,46));
+            b.setOnClickListener(v -> {
+                String value = ((Button)v).getText().toString();
+                alertThreshold = "HOOG+".equals(value) ? 4 : "KRITIEK".equals(value) ? 5 : 99;
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt("alert_threshold_v30", alertThreshold).apply();
+                updateAlertSetting();
+            });
+            LinearLayout.LayoutParams abp = new LinearLayout.LayoutParams(0, dp(40), 1);
+            abp.setMargins(0, dp(8), dp(6), 0);
+            alertButtons.addView(b, abp);
+        }
+        missionPanel.addView(alertButtons);
+        content.addView(missionPanel);
+
         LinearLayout tools = new LinearLayout(this);
         tools.setOrientation(LinearLayout.HORIZONTAL);
         SearchView search = new SearchView(this);
@@ -188,6 +220,12 @@ public class MainActivity extends Activity {
         share.setBackgroundColor(Color.rgb(23,35,46));
         share.setOnClickListener(v -> shareSummary());
         tools.addView(share, new LinearLayout.LayoutParams(dp(86), dp(52)));
+        Button sort = new Button(this);
+        sort.setText("SORT");
+        sort.setTextColor(Color.WHITE);
+        sort.setBackgroundColor(Color.rgb(23,35,46));
+        sort.setOnClickListener(v -> { sortBySeverity = !sortBySeverity; renderIncidents(); });
+        tools.addView(sort, new LinearLayout.LayoutParams(dp(82), dp(52)));
         content.addView(tools);
 
         HorizontalScrollView filters = new HorizontalScrollView(this);
@@ -428,7 +466,7 @@ public class MainActivity extends Activity {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(12000);
         c.setReadTimeout(15000);
-        c.setRequestProperty("User-Agent", "DefconWatch-Android/2.5");
+        c.setRequestProperty("User-Agent", "DefconWatch-Android/3.0");
         c.setRequestProperty("Accept", "application/json, application/xml, text/xml, */*");
         if (c.getResponseCode() >= 400) throw new IllegalStateException("HTTP " + c.getResponseCode());
         return c;
@@ -451,6 +489,8 @@ public class MainActivity extends Activity {
         }
         updateReadiness();
         updateRiskScore();
+        updateMissionBrief();
+        updateAlertSetting();
         updateSourceStatus();
         updateStats();
         updateRegions();
@@ -498,7 +538,10 @@ public class MainActivity extends Activity {
     private void renderIncidents() {
         incidentContainer.removeAllViews();
         int shown = 0;
-        for (Incident i : incidents) {
+        List<Incident> display = new ArrayList<>(incidents);
+        if (sortBySeverity) Collections.sort(display, Comparator.comparingInt((Incident i) -> i.severity).reversed());
+        else Collections.sort(display, Comparator.comparing(i -> i.source == null ? "" : i.source));
+        for (Incident i : display) {
             if (!matchesFilter(i)) continue;
             LinearLayout card = panel();
             TextView title = text(i.title, 13, Color.WHITE, true);
@@ -539,6 +582,29 @@ public class MainActivity extends Activity {
         if (riskScoreText != null) { riskScoreText.setText(score + " / 100 • " + label); riskScoreText.setTextColor(color); }
     }
 
+    private void updateMissionBrief() {
+        if (missionBriefText == null) return;
+        int critical = 0, high = 0, quakes = 0, disasters = 0;
+        Incident top = null;
+        for (Incident i : incidents) {
+            if (i.severity >= 5) critical++;
+            if (i.severity >= 4) high++;
+            if ("AARDBEVING".equals(i.type)) quakes++;
+            if (!"AARDBEVING".equals(i.type) && !"SPACE".equals(i.type)) disasters++;
+            if (top == null || i.severity > top.severity) top = i;
+        }
+        String lead = top == null ? "Geen dominant incident gedetecteerd." : "Hoogste prioriteit: " + top.title + ".";
+        String brief = lead + " Wereldwijd " + incidents.size() + " signalen, waarvan " + high + " hoog/kritiek, " + quakes + " aardbevingen en " + disasters + " overige rampmeldingen.";
+        if (critical > 0) brief += " Directe aandacht aanbevolen voor " + critical + " kritieke melding(en).";
+        missionBriefText.setText(brief);
+    }
+
+    private void updateAlertSetting() {
+        if (alertSettingText == null) return;
+        String label = alertThreshold == 4 ? "hoog en kritiek" : alertThreshold == 5 ? "alleen kritiek" : "uitgeschakeld";
+        alertSettingText.setText("Meldingsdrempel: " + label);
+    }
+
     private void updateSourceStatus() {
         if (sourceStatusText == null) return;
         sourceStatusText.setText("USGS: " + (usgsOnline ? "LIVE" : "OFFLINE") + "  •  GDACS: " + (gdacsOnline ? "LIVE" : "OFFLINE") + "  •  ISS: " + (issOnline ? "LIVE" : "OFFLINE"));
@@ -548,7 +614,7 @@ public class MainActivity extends Activity {
     private void shareSummary() {
         int critical = 0;
         for (Incident i : incidents) if (i.severity >= 4) critical++;
-        String body = "DefconWatch v2.5\nActieve signalen: " + incidents.size() + "\nHoog/kritiek: " + critical + "\nStatus: " + statusText.getText() + "\n\nNiet-officiële openbare OSINT-inschatting.";
+        String body = "DefconWatch v3.0 Mission Brief\n" + (missionBriefText == null ? "" : missionBriefText.getText()) + "\n\nActieve signalen: " + incidents.size() + "\nHoog/kritiek: " + critical + "\nStatus: " + statusText.getText() + "\n\nNiet-officiële openbare OSINT-inschatting.";
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
         share.putExtra(Intent.EXTRA_SUBJECT, "DefconWatch situatierapport");
@@ -590,13 +656,13 @@ public class MainActivity extends Activity {
             long t = prefs.getLong(CACHE_TIME, 0);
             statusText.setText("OFFLINE CACHE • live synchronisatie volgt");
             lastUpdated.setText("Cache: " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date(t)));
-            updateReadiness(); updateRiskScore(); updateSourceStatus(); updateStats(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
+            updateReadiness(); updateRiskScore(); updateMissionBrief(); updateAlertSetting(); updateSourceStatus(); updateStats(); updateRegions(); renderIncidents(); mapView.setIncidents(new ArrayList<>(incidents));
         } catch (Exception ignored) { }
     }
 
     private void maybeNotifyCritical(List<Incident> fetched) {
         Incident critical = null;
-        for (Incident i : fetched) if (i.severity >= 5) { critical = i; break; }
+        for (Incident i : fetched) if (i.severity >= alertThreshold) { critical = i; break; }
         if (critical == null) return;
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;

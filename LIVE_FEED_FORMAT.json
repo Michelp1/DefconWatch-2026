@@ -1,14 +1,15 @@
 {
-  "version": "2.5",
+  "schemaVersion": "3.0",
+  "appVersion": "3.0.0",
+  "disclaimer": "Geen officiële of geclassificeerde DEFCON-feed; uitsluitend openbare OSINT-indicatie.",
   "refreshMinutes": 10,
   "sources": [
-    {"id":"usgs","name":"USGS Significant Earthquakes","url":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson","format":"geojson","healthIndicator":true},
-    {"id":"gdacs","name":"GDACS Disaster Alerts","url":"https://www.gdacs.org/xml/rss.xml","format":"rss","healthIndicator":true},
-    {"id":"iss","name":"ISS Live Position","url":"https://api.wheretheiss.at/v1/satellites/25544","format":"json","healthIndicator":true}
+    {"id":"usgs","name":"USGS Significant Earthquakes","format":"GeoJSON","url":"https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_day.geojson"},
+    {"id":"gdacs","name":"GDACS Disaster Alerts","format":"RSS/XML","url":"https://www.gdacs.org/xml/rss.xml"},
+    {"id":"iss","name":"Where The ISS At","format":"JSON","url":"https://api.wheretheiss.at/v1/satellites/25544"}
   ],
   "incidentTypes": ["AARDBEVING","STORM","VULKAAN","OVERSTROMING","BOSBRAND","TSUNAMI","SPACE","RAMP"],
   "severity": {"1":"informatief","2":"laag","3":"verhoogd","4":"hoog","5":"kritiek"},
-  "features": {"search":true,"shareSummary":true,"riskScore":true,"sourceHealth":true,"offlineCache":true},
-  "schema": {"required":["type","title","source","url","lat","lon","severity"]},
-  "disclaimer": "Geen officiële of geclassificeerde DEFCON-feed. Alle niveaus en scores zijn niet-officiële OSINT-indicaties."
+  "notificationThresholds": {"4":"hoog en kritiek","5":"alleen kritiek","99":"uit"},
+  "requiredIncidentFields": ["type","title","source","url","lat","lon","severity"]
 }
